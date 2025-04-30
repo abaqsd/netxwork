@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Netxwork - Home</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f2f5; }
+        .container { max-width: 900px; margin: auto; padding: 20px; background: #fff; margin-top: 50px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .profile-header { display: flex; align-items: center; }
+        .profile-avatar { width: 100px; height: 100px; border-radius: 50%; overflow: hidden; margin-right: 20px; }
+        .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-info h1 { margin: 0; }
+        .profile-details { margin-top: 20px; }
+        .profile-details h3 { margin-bottom: 10px; color: #333; }
+        .buttons { margin-top: 30px; }
+        .button { padding: 10px 20px; background: #3498db; color: white; text-decoration: none; border-radius: 8px; margin-right: 10px; display: inline-block; }
+        .logout { background: #e74c3c; }
+
+        /* AI Mentor Styles */
+        .ai-mentor { margin-top: 40px; padding: 20px; border-radius: 12px; background: #f9f9f9; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
+        .ai-mentor h2 { margin-bottom: 10px; }
+        .ai-mentor textarea { width: 100%; height: 100px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; resize: vertical; }
+        .ai-mentor button { margin-top: 10px; padding: 10px 15px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; }
+        .ai-mentor button:hover { background: #45a049; }
+        .ai-response { margin-top: 20px; padding: 15px; border-radius: 8px; background: #e8f5e9; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    {% if user.is_authenticated %}
+        <div class="profile-header">
+            <div class="profile-avatar">
+                {% if user_profile.avatar %}
+                    <img src="{{ user_profile.avatar.url }}" alt="Avatar">
+                {% else %}
+                    <img src="https://via.placeholder.com/100" alt="No avatar">
+                {% endif %}
+            </div>
+            <div class="profile-info">
+                <h1>{{ user_profile.full_name|default:"Name not specified" }}</h1>
+                <p>{{ user_profile.email }}</p>
+            </div>
+        </div>
+
+        <div class="profile-details">
+            <h3>About me:</h3>
+            <p>{{ user_profile.bio|default:"No information" }}</p>
+
+            <h3>Skills:</h3>
+            <p>{{ user_profile.skills|default:"No information" }}</p>
+
+            <h3>Interests:</h3>
+            <p>{{ user_profile.interests|default:"No information" }}</p>
+        </div>
+
+        <div class="buttons">
+            <a href="/auth/registration/profile-setup/" class="button">Edit profile</a>
+            <a href="/accounts/logout/" class="button logout">Logout</a>
+        </div>
+
+    {% else %}
+        <h1>Welcome to Netxwork!</h1>
+        <div class="buttons">
+            <a href="/accounts/login/signup/" class="button">Create an account</a>
+            <a href="/accounts/login/" class="button">Login</a>
+        </div>
+    {% endif %}
+</div>
+
+
+<!-- Floating AI Mentor Button -->
+<button id="open-chat-btn" style="
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    z-index: 1000;
+">
+    🤖
+</button>
+
+<!-- AI Mentor Chat Modal with History -->
+<div id="chat-modal" style="
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1001;
+    justify-content: center;
+    align-items: center;
+">
+    <div style="
+        background: white;
+        width: 90%;
+        max-width: 900px;
+        height: 80%;
+        border-radius: 12px;
+        display: flex;
+        overflow: hidden;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    ">
+        <!-- Sidebar for History -->
+        <div id="chat-history-sidebar" style="
+            width: 250px;
+            background: #f8f9fa;
+            padding: 10px;
+            overflow-y: auto;
+            border-right: 1px solid #ccc;
+        ">
+            <h3>History</h3>
+            <div id="history-list"></div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div style="flex-grow: 1; display: flex; flex-direction: column;">
+            <div style="padding: 15px; background: #4CAF50; color: white; display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin: 0;">AI Mentor</h2>
+                <button onclick="closeChat()" style="background: transparent; border: none; color: white; font-size: 20px; cursor: pointer;">×</button>
+            </div>
+
+            <div id="chat-history" style="
+                flex-grow: 1;
+                padding: 15px;
+                overflow-y: auto;
+                background: #f0f2f5;
+            ">
+                <!-- Chat messages will appear here -->
+            </div>
+
+            <div style="padding: 10px; border-top: 1px solid #ccc; display: flex;">
+                <input id="chat-input" type="text" placeholder="Ask your question..." style="
+                    flex-grow: 1;
+                    padding: 10px;
+                    border-radius: 8px;
+                    border: 1px solid #ccc;
+                    margin-right: 10px;
+                ">
+                <button onclick="sendMessage()" style="
+                    background: #4CAF50;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 10px 20px;
+                    cursor: pointer;
+                ">Send</button>
+            </div>
+
+            <div style="text-align: center; padding: 10px;">
+                <button onclick="clearChat()" style="
+                    background: #e74c3c;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 5px 15px;
+                    cursor: pointer;
+                    font-size: 14px;
+                ">Clear Chat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript Logic -->
+<script>
+    const openBtn = document.getElementById('open-chat-btn');
+    const chatModal = document.getElementById('chat-modal');
+    const chatHistory = document.getElementById('chat-history');
+    const chatInput = document.getElementById('chat-input');
+    const historyList = document.getElementById('history-list');
+
+    let currentChat = [];
+    let allChats = [];
+
+    openBtn.addEventListener('click', () => {
+        chatModal.style.display = 'flex';
+    });
+
+    function closeChat() {
+        chatModal.style.display = 'none';
+    }
+
+    function addMessage(sender, text) {
+        const message = document.createElement('div');
+        message.innerHTML = `<strong>${sender}:</strong> ${text}`;
+        message.style.marginBottom = '10px';
+        chatHistory.appendChild(message);
+        currentChat.push({ sender, text });
+    }
+
+    function updateLastBotMessage(text) {
+        const messages = chatHistory.querySelectorAll('div');
+        const lastMessage = messages[messages.length - 1];
+        lastMessage.innerHTML = `<strong>Mentor:</strong> ${text}`;
+        if (currentChat.length > 0) {
+            currentChat[currentChat.length - 1].text = text;
+        }
+        scrollToBottom();
+    }
+
+    async function sendMessage() {
+        const userMessage = chatInput.value.trim();
+        if (!userMessage) return;
+
+        addMessage('You', userMessage);
+        chatInput.value = '';
+        scrollToBottom();
+
+        addMessage('Mentor', 'Thinking... 🤔');
+
+        try {
+            const response = await fetch('/api/mentor/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ question: userMessage })
+            });
+
+            const data = await response.json();
+            updateLastBotMessage(data.answer || "Sorry, I couldn't understand that.");
+        } catch (error) {
+            updateLastBotMessage('Error connecting to mentor.');
+        }
+    }
+
+    function clearChat() {
+        if (currentChat.length > 0) {
+            allChats.push([...currentChat]);
+            updateHistory();
+        }
+        currentChat = [];
+        chatHistory.innerHTML = '';
+    }
+
+    function updateHistory() {
+        historyList.innerHTML = '';
+        allChats.forEach((chat, index) => {
+            const btn = document.createElement('button');
+            btn.innerText = `Chat ${index + 1}`;
+            btn.style.width = '100%';
+            btn.style.marginBottom = '5px';
+            btn.style.padding = '8px';
+            btn.style.background = '#3498db';
+            btn.style.color = 'white';
+            btn.style.border = 'none';
+            btn.style.borderRadius = '6px';
+            btn.style.cursor = 'pointer';
+            btn.onclick = () => loadChat(chat);
+            historyList.appendChild(btn);
+        });
+    }
+
+    function loadChat(chat) {
+        chatHistory.innerHTML = '';
+        chat.forEach(({ sender, text }) => {
+            addMessage(sender, text);
+        });
+    }
+
+    function scrollToBottom() {
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+</script>

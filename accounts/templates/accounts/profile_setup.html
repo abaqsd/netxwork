@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Profile setup | Netxwork</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f9f9f9; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        form { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 400px; }
+        input, textarea, button { width: 100%; padding: 10px; margin-top: 10px; }
+        button { background: #2ecc71; color: white; border: none; border-radius: 6px; cursor: pointer; }
+        .secondary-button { background: #95a5a6; margin-top: 10px; }
+        h2 { text-align: center; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <form method="post" enctype="multipart/form-data">
+        <h2>Fill out your profile</h2>
+        {% csrf_token %}
+        <input type="text" name="full_name" placeholder="Your name">
+        <input type="file" name="avatar">
+        <textarea name="bio" placeholder="Briefly about yourself"></textarea>
+        <textarea name="skills" placeholder="Your skills"></textarea>
+        <textarea name="interests" placeholder="Your interests"></textarea>
+
+        <button type="submit">Save profile</button>
+        <button type="submit" name="skip" value="true" class="secondary-button">Do it later</button>
+    </form>
+</body>
+</html>
